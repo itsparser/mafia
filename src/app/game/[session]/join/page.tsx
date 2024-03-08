@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -17,6 +17,16 @@ export default function Join({ params }: { params: { session: string } }) {
   // Capture Player Name for players entering via Join Link
   const [avatarName, setAvatarName] = useState("");
 
+  const [avatarId, setAvatarId] = useState("");
+
+  useEffect(() => {
+    // Get the value from local storage if it exists
+    const name = localStorage.getItem("avatarName") || "";
+    const id = localStorage.getItem("avatarId") || "";
+    setAvatarName(name);
+    setAvatarId(id);
+  }, []);
+
   async function joinRoom() {
     const response = await fetch(`/api/v1/room/${params.session}`, {
       method: "POST",
@@ -26,7 +36,10 @@ export default function Join({ params }: { params: { session: string } }) {
       body: JSON.stringify({ avatarName, roomId: params.session }),
     });
     if (response.ok) {
-      router.push(`/game/${params.session}`);
+      const room = await response.json();
+      localStorage.setItem("avatarId", room.player.id);
+      localStorage.setItem("avatarName", room.player.name);
+      router.push(`/game/${params.session}/lobby`);
     } else {
       console.log(response);
     }

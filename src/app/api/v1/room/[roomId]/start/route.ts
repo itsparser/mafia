@@ -37,7 +37,7 @@ export async function POST(
   } else if (player.id === room.createdBy) {
     session.status = "playing";
     let totalPlayers = session.totalPlayers || 1;
-    let mafiaCount = Math.ceil(totalPlayers / 5);
+    let mafiaCount = 4; //Math.ceil(totalPlayers / 5);
     session.mafias = session.mafias || [];
     for (let i = 0; i < mafiaCount; i++) {
       let random = Math.floor(Math.random() * totalPlayers);

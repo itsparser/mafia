@@ -6,6 +6,7 @@ import {
   getSession,
   updateSession,
 } from "@/service/room";
+import { vote } from "@/service/vote";
 import { type NextRequest } from "next/server";
 
 export async function POST(
@@ -24,4 +25,12 @@ export async function POST(
   console.log("room", room);
   let session: Partial<Session> = await getSession(room?.currentSession);
   console.log("session", session);
+  await vote(`session-${room?.currentSession}/${session.round}/1`);
+  return Response.json(
+    {
+      message: "Vote is done",
+      status: "voted",
+    },
+    { status: 200 }
+  );
 }

@@ -58,5 +58,8 @@ export async function POST(
       { status: 400 }
     );
   }
-  return Response.json({ message: "Joined Successfully", status: "joined" });
+  return Response.json(
+    { message: "Joined Successfully", status: "joined", player },
+    { status: 200 }
+  );
 }

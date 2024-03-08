@@ -1,4 +1,4 @@
-import { getOrCreatePlayer } from "@/service/player";
+import { getOrCreatePlayer, getPlayer } from "@/service/player";
 import {
   Session,
   createSession,
@@ -14,18 +14,18 @@ export async function GET(
   { params }: { params: { roomId: string } }
 ) {
   const room_id = params.roomId;
-  //   let input = await request.json();
-  //   console.log("join sesion request", input);
-  //   let player = await getOrCreatePlayer(
-  //     input["avatarName"],
-  //     input?.["avatarId"]
-  //   );
-  console.log("room_id", room_id);
+  let avatarId = request.headers.get("avatarId") || "";
+
+  let player = await getPlayer(avatarId);
+  console.log("player", player, "room_id", room_id);
   let room = await get(room_id);
   console.log("room", room);
   let session: Partial<Session> = await getSession(room?.currentSession);
+  let mafiaList = (session.mafias || []).map((m) => m.id);
   console.log("session", session);
-  session.mafias = [];
+  if (session.status === "playing" && !mafiaList.includes(player.id)) {
+    session.mafias = [];
+  }
   session.villagers = [];
   return Response.json(session, { status: 200 });
 }

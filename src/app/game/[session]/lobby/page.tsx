@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -22,6 +22,16 @@ function replaceLastPart(url: string, newPart: string) {
 
 export default function Lobby({ params }: { params: { session: string } }) {
   const router = useRouter();
+  const [players, setPlayers] = useState([]);
+  const [room, setRoomInfo] = useState({});
+  const [isModerator, setIsModerator] = useState(false);
+
+  useEffect(() => {
+    roomInfo();
+    // setInterval(function () {
+    //   roomInfo();
+    // }, 5000);
+  }, []);
 
   // Store game config
   const [config, setConfig] = useState({
@@ -47,6 +57,31 @@ export default function Lobby({ params }: { params: { session: string } }) {
     }
   }
 
+  async function roomInfo() {
+    const response = await fetch(`/api/v1/room/${params.session}/info`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        avatarId: localStorage.getItem("avatarId") || "",
+      },
+    });
+    if (response.ok) {
+      let roomInfo = await response.json();
+      if (roomInfo.createdBy === localStorage.getItem("avatarId")) {
+        setIsModerator(true);
+      }
+      setPlayers(roomInfo.players);
+      let checkIamPlayer = roomInfo.players.filter(
+        (p: any) => p.id === localStorage.getItem("avatarId")
+      );
+      if (roomInfo.status === "playing" && checkIamPlayer.length > 0) {
+        router.push(`/game/${params.session}`);
+      }
+    } else {
+      console.log(response);
+    }
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Card className="min-w-[400px]">
@@ -64,6 +99,7 @@ export default function Lobby({ params }: { params: { session: string } }) {
               type="number"
               label="Number of players"
               value={config[CONFIG_META.PLAYER_COUNT]}
+              disabled={!isModerator}
               onChange={(event) => {
                 setConfig({
                   ...config,
@@ -74,6 +110,7 @@ export default function Lobby({ params }: { params: { session: string } }) {
             <Input
               type="number"
               label="Time per round (in minutes)"
+              disabled={!isModerator}
               value={config[CONFIG_META.DURATION]}
               onChange={(event) => {
                 setConfig({
@@ -95,10 +132,23 @@ export default function Lobby({ params }: { params: { session: string } }) {
           >
             Copy Link
           </Button>
-          <Button color="primary" onClick={startGame}>
+          <Button color="primary" disabled={!isModerator} onClick={startGame}>
             Start Game
           </Button>
         </CardFooter>
+        <Divider />
+        <CardBody>
+          <div className="grid gap-y-4">
+            <h3>Players</h3>
+            {players.map((player: any) => (
+              <div key={player.id}>
+                {player.name}{" "}
+                {player.id === localStorage.getItem("avatarId") ? "(You)" : ""}
+              </div>
+            ))}
+          </div>
+        </CardBody>
+        <Divider />
       </Card>
     </main>
   );
